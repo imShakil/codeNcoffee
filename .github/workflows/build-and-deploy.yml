@@ -38,7 +38,7 @@ jobs:
         with:
           context: ./deploy-with-ecs/simple-react-app
           push: true
-          tags: ${{ vars.DOCKER_user }}/${{ env.APP_NAME }}:latest
+          tags: ${{ vars.DOCKER_USER }}/${{ env.APP_NAME }}:latest
 
   deploy:
     name: Deploy on AWS
@@ -66,22 +66,27 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-      - name: Terraform Init
-        id: init
-        run: terraform init -input=false
+      # - name: Terraform Init
+      #   id: init
+      #   run: terraform init -input=false
 
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color -input=false
-        continue-on-error: false
+      # - name: Terraform Plan
+      #   id: plan
+      #   run: terraform plan -no-color -input=false
+      #   continue-on-error: false
       - name: Terraform Apply
         id: apply
+        working-directory: ./deploy-with-ecs/terraform/
         env:
           TF_VAR_cnc_ssh_public_key: ${{ secrets.CNC_SSH_PUBLIC_KEY }}
-        run: terraform apply -auto-approve -input=false
+        run: |
+          terraform init
+          terraform plan
+          terraform apply -auto-approve
         continue-on-error: false
       - name: Get ALB DNS Name
         id: alb_dns
+        working-directory: ./deploy-with-ecs/terraform/
         run: |
           echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> "${GITHUB_OUTPUT}"
 
@@ -106,19 +111,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: checkout repo
-      - name: Move Into Terraform Directory
-        run: |
-          pwd
-          cd ./deploy-with-ecs/terraform/
+      # - name: Move Into Terraform Directory
+      #   run: |
+      #     pwd
+      #     cd ./deploy-with-ecs/terraform/
       - uses: aws-actions/configure-aws-credentials@v4
         name: AWS Identity Setup
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCES_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: hashicorp/setup-terraform@v3
         name: setup tf
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
-      - name: tf destory
-        run: terraform destory -auto-approve -input=false
+      - name: Terraform destroy
+        working-directory: ./deploy-with-ecs/terraform/
+        run: |
+          terraform init
+          terraform destory -auto-approve -input=false
