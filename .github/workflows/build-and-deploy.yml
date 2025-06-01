@@ -1,0 +1,117 @@
+name: Build Deploy Destroy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: "Destroy infrastructure after deployment testing"
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  APP_NAME: react-test
+  TERRAFORM_VERSION: 1.12.1
+  AWS_REGION: ap-southeast-1
+
+jobs:
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./deploy-with-ecs/simple-react-app
+          push: true
+          platforms: linux/amd64, linux/arm64
+          tags: ${{ vars.DOCKER_user }}/${{ env.APP_NAME }}:latest
+
+  deploy:
+    name: Deploy on AWS
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN }}
+    outputs:
+      alb_dns_name: ${{ steps.alb_dns.outputs.alb_dns_name }}
+    steps:
+      - uses: actions/checkout@v4
+        name: checkout repo
+      - uses: aws-actions/configure-aws-credentials@v4
+        name: Setup AWS Identity
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v3
+        name: setup terraform
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: false
+      - name: Terraform Apply
+        id: apply
+        env:
+          TF_VAR_cnc_ssh_public_key: ${{ secrets.CNC_SSH_PUBLIC_KEY }}
+        run: terraform apply -auto-approve -input=false
+        continue-on-error: false
+      - name: Get ALB DNS Name
+        id: alb_dns
+        run: |
+          echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> "${GITHUB_OUTPUT}"
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test Deployment
+    needs: deploy
+    steps:
+      - name: Test ALB Endpoint
+        run: |
+          echo "Testing ALB Endpoint: ${{ needs.deploy.outputs.alb_dns_name }}"
+          curl -I http://${{ needs.deploy.outputs.alb_dns_name }}
+
+  destroy:
+    name: Schedule for Destroy
+    runs-on: ubuntu-latest
+    env:
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN }}
+      image_tag: ${{ vars.DOCKER_USER }}/react-test:latest
+    needs: test
+    if: always() && (github.event_name == 'workflow_dispatch') && (github.event.inputs.destroy == 'true')
+    steps:
+      - uses: actions/checkout@v4
+        name: checkout repo
+      - uses: aws-actions/configure-aws-credentials@v4
+        name: AWS Identity Setup
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCES_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v3
+        name: setup tf
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - name: tf destory
+        run: terraform destory -auto-approve -input=false
