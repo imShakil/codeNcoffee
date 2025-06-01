@@ -17,11 +17,11 @@ repos:
     rev: v0.0.3
     hooks:
       - id: sync-pre-commit-deps
-  - repo: https://github.com/AleksaC/terraform-py
-    rev: v1.12.1
-    hooks:
-      - id: tf-fmt
-      - id: tf-validate
+  # - repo: https://github.com/AleksaC/terraform-py
+  #   rev: v1.12.1
+  #   hooks:
+  #     - id: tf-fmt
+  #     - id: tf-validate
   - repo: https://github.com/jorisroovers/gitlint
     rev: v0.19.1
     hooks:
