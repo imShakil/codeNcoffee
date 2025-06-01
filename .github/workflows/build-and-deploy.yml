@@ -80,7 +80,7 @@ jobs:
       - name: Get ALB DNS Name
         id: alb_dns
         run: |
-          echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> $GITHUB_OUTPUT
+          echo "alb_dns_name=$(terraform output -raw alb_dns_name)" >> "${GITHUB_OUTPUT}"
 
   test:
     runs-on: ubuntu-latest
