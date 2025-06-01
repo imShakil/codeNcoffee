@@ -18,7 +18,7 @@ on:
 env:
   APP_NAME: react-test
   TERRAFORM_VERSION: 1.12.1
-  AWS_REGION: ap-southeast-1
+  AWS_DEFAULT_REGION: ap-southeast-1
 
 jobs:
   build:
@@ -51,10 +51,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: checkout repo
-      - name: Move into Terraform Directory
-        run: |
-          pwd
-          cd ./deploy-with-ecs/terraform
       - uses: aws-actions/configure-aws-credentials@v4
         name: Setup AWS Identity
         with:
@@ -65,9 +61,13 @@ jobs:
         name: setup terraform
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - name: Configure Terraform Credentials
+        run: |
+          mkdir -p ~/.terraform.d
+          echo '{"credentials":{"app.terraform.io":{"token":"${{ secrets.TF_CLOUD_TOKEN }}"}}}' > ~/.terraform.d/credentials.tfrc.json
       - name: Terraform Init
         id: init
-        working-directory: ./deploy-with-ecs
+        working-directory: ./deploy-with-ecs/terraform
         run: terraform init -input=false
 
       - name: Terraform Plan
@@ -80,10 +80,7 @@ jobs:
         working-directory: ./deploy-with-ecs/terraform/
         env:
           TF_VAR_cnc_ssh_public_key: ${{ secrets.CNC_SSH_PUBLIC_KEY }}
-        run: |
-          terraform init
-          terraform plan
-          terraform apply -auto-approve
+        run: terraform apply -auto-approve -input=false
         continue-on-error: false
       - name: Get ALB DNS Name
         id: alb_dns
@@ -105,6 +102,8 @@ jobs:
     name: Schedule for Destroy
     runs-on: ubuntu-latest
     env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN }}
       image_tag: ${{ vars.DOCKER_USER }}/react-test:latest
     needs: test

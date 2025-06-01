@@ -47,7 +47,7 @@ resource "aws_instance" "cnc_instance" {
   user_data = file("./run_container_app.sh")
 
   tags = {
-    Name = "WebServer-${count.index + 1}"
+    Name = "CNC-WebServer-${count.index + 1}"
   }
 
 }
