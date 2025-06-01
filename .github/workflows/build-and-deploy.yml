@@ -53,7 +53,7 @@ jobs:
         name: checkout repo
       - name: Move into Terraform Directory
         run: |
-          echo $(pwd)
+          pwd
           cd ./deplo-with-ecs/terraform
       - uses: aws-actions/configure-aws-credentials@v4
         name: Setup AWS Identity
@@ -108,7 +108,7 @@ jobs:
         name: checkout repo
       - name: Move Into Terraform Directory
         run: |
-          echo $(pwd)
+          pwd
           cd ./deploy-with-ecs/terraform
       - uses: aws-actions/configure-aws-credentials@v4
         name: AWS Identity Setup
