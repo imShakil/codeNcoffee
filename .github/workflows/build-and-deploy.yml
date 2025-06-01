@@ -73,6 +73,8 @@ jobs:
 
       - name: Terraform Plan
         id: plan
+        env:
+          TF_VAR_cnc_ssh_public_key: ${{ secrets.CNC_SSH_PUBLIC_KEY }}
         working-directory: ./deploy-with-ecs/terraform
         run: terraform plan -no-color -input=false
         continue-on-error: false
