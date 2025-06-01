@@ -65,15 +65,16 @@ jobs:
         name: setup terraform
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - name: Terraform Init
+        id: init
+        working-directory: ./deploy-with-ecs
+        run: terraform init -input=false
 
-      # - name: Terraform Init
-      #   id: init
-      #   run: terraform init -input=false
-
-      # - name: Terraform Plan
-      #   id: plan
-      #   run: terraform plan -no-color -input=false
-      #   continue-on-error: false
+      - name: Terraform Plan
+        id: plan
+        working-directory: ./deploy-with-ecs/terraform
+        run: terraform plan -no-color -input=false
+        continue-on-error: false
       - name: Terraform Apply
         id: apply
         working-directory: ./deploy-with-ecs/terraform/
@@ -111,10 +112,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: checkout repo
-      # - name: Move Into Terraform Directory
-      #   run: |
-      #     pwd
-      #     cd ./deploy-with-ecs/terraform/
       - uses: aws-actions/configure-aws-credentials@v4
         name: AWS Identity Setup
         with:
@@ -129,4 +126,4 @@ jobs:
         working-directory: ./deploy-with-ecs/terraform/
         run: |
           terraform init
-          terraform destory -auto-approve -input=false
+          terraform destroy -auto-approve -input=false
