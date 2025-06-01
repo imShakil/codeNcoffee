@@ -54,7 +54,7 @@ jobs:
       - name: Move into Terraform Directory
         run: |
           pwd
-          cd ./deplo-with-ecs/terraform
+          cd ./deploy-with-ecs/terraform
       - uses: aws-actions/configure-aws-credentials@v4
         name: Setup AWS Identity
         with:
@@ -109,7 +109,7 @@ jobs:
       - name: Move Into Terraform Directory
         run: |
           pwd
-          cd ./deploy-with-ecs/terraform
+          cd ./deploy-with-ecs/terraform/
       - uses: aws-actions/configure-aws-credentials@v4
         name: AWS Identity Setup
         with:
