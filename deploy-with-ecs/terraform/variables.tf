@@ -21,3 +21,8 @@ variable "private_subnet_cidr" {
   type        = list(string)
   default     = ["10.10.1.0/28", "10.10.20.0/28"] # add more if needed
 }
+
+variable "cnc_ssh_public_key" {
+  description = "Publick key for ec2"
+  type        = string
+}

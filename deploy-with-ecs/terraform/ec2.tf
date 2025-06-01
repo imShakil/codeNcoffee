@@ -32,7 +32,7 @@ resource "aws_security_group" "cnc_ec2_sg" {
 
 resource "aws_key_pair" "cnc_access_key" {
   key_name   = "cnc_access_key"
-  public_key = file("~/.ssh/cnc_access_key.pub")
+  public_key = var.cnc_ssh_public_key
 }
 
 resource "aws_instance" "cnc_instance" {
