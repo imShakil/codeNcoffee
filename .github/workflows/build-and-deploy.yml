@@ -5,17 +5,6 @@ on:
     branches:
       - main
       - deploy
-  workflow_dispatch:
-    inputs:
-      destroy:
-        description: "Destroy infrastructure after deployment testing"
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
-
 env:
   APP_NAME: react-test
   TERRAFORM_VERSION: 1.12.1
@@ -96,36 +85,57 @@ jobs:
     name: Test Deployment
     needs: deploy
     steps:
+      - name: Hold on
+        run: |
+          echo "Wating for loadbalancer start working"
+          sleep 180
+          echo "Done"
       - name: Test ALB Endpoint
         run: |
           echo "Testing ALB Endpoint: ${{ needs.deploy.outputs.alb_dns_name }}"
           curl -I http://${{ needs.deploy.outputs.alb_dns_name }}
-
-  destroy:
-    name: Schedule for Destroy
+  auto-destroy:
+    name: Auto Destroy After 30 Minutes
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN }}
-      image_tag: ${{ vars.DOCKER_USER }}/react-test:latest
     needs: test
-    if: always() && (github.event_name == 'workflow_dispatch') && (github.event.inputs.destroy == 'true')
+    if: always() && needs.test.result != 'failure'
     steps:
+      - name: Wait for 30 minutes
+        run: |
+          echo "Infrastructure will be destroyed in 30 minutes..."
+          echo "Started at: $(date)"
+          sleep 1800  # 30 minutes = 1800 seconds
+          echo "30 minutes elapsed, proceeding with destruction at: $(date)"
+
       - uses: actions/checkout@v4
         name: checkout repo
+
       - uses: aws-actions/configure-aws-credentials@v4
         name: AWS Identity Setup
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
       - uses: hashicorp/setup-terraform@v3
         name: setup tf
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure Terraform Credentials
+        run: |
+          mkdir -p ~/.terraform.d
+          echo '{"credentials":{"app.terraform.io":{"token":"${{ secrets.TF_CLOUD_TOKEN }}"}}}' > ~/.terraform.d/credentials.tfrc.json
+
       - name: Terraform destroy
+        env:
+          TF_VAR_cnc_ssh_public_key: ${{ secrets.CNC_SSH_PUBLIC_KEY }}
         working-directory: ./deploy-with-ecs/terraform/
         run: |
           terraform init
           terraform destroy -auto-approve -input=false
+          echo "Infrastructure destroyed at: $(date)"
