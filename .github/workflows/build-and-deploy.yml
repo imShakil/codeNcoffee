@@ -89,30 +89,23 @@ jobs:
     steps:
       - name: Hold on
         run: |
-          echo "Wating for loadbalancer start working"
+          echo "Wating for loadbalancer"
           sleep 180
           echo "Done"
       - name: Test ALB Endpoint
         run: |
           echo "Testing ALB Endpoint: ${{ needs.deploy.outputs.alb_dns_name }}"
           curl -I http://${{ needs.deploy.outputs.alb_dns_name }}
-  auto-destroy:
-    name: Auto Destroy After 30 Minutes
+  destroy:
+    name: Destroy Infrastructure
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN }}
-    needs: deploy
-    if: needs.deploy.result != failure()
+    needs: test
+    if: needs.test.result != failure()
     steps:
-      - name: Wait for 30 minutes
-        run: |
-          echo "Infrastructure will be destroyed in 30 minutes..."
-          echo "Started at: $(date)"
-          sleep 1800  # 30 minutes = 1800 seconds
-          echo "30 minutes elapsed, proceeding with destruction at: $(date)"
-
       - uses: actions/checkout@v4
         name: checkout repo
 
