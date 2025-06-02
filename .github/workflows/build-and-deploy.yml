@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Test Deployment
     needs: deploy
-    if: needs.deploy.result != failure()
+    if: needs.deploy.result == 'success'
     continue-on-error: true
     steps:
       - name: Hold on
@@ -104,7 +104,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN }}
     needs: test
-    if: needs.test.result != failure()
+    if: needs.test.result == 'success'
     steps:
       - uses: actions/checkout@v4
         name: checkout repo
