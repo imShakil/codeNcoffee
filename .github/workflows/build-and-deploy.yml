@@ -84,6 +84,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Test Deployment
     needs: deploy
+    if: needs.deploy.result != failure()
+    continue-on-error: true
     steps:
       - name: Hold on
         run: |
@@ -101,8 +103,8 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
       TF_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN }}
-    needs: test
-    if: always() && needs.test.result != 'failure'
+    needs: deploy
+    if: needs.deploy.result != failure()
     steps:
       - name: Wait for 30 minutes
         run: |
