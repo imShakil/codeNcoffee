@@ -1,4 +1,12 @@
 terraform {
+  backend "remote" {
+    organization = "ShakilOPs"
+
+    workspaces {
+      name = "codeNcoffee"
+    }
+
+  }
   # cloud {
   #   organization = "ShakilOPs"
   #   workspaces {
