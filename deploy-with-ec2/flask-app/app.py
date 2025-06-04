@@ -9,7 +9,7 @@ def index():
     host_ip = socket.gethostbyname(socket.gethostname())
     return jsonify(
         {
-            "message": "Hello, World! This is a Flask app running on ECS with Host: {}!".format(
+            "message": "Hello, World! This is a Flask app running on EC2 with Host: {}".format(
                 host_ip
             )
         }
