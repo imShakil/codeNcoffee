@@ -2,10 +2,10 @@ name: Build Deploy Destroy
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      # - deploy
+  # push:
+  #   branches:
+  #     - main
+  #     # - deploy
 env:
   APP_NAME: flask-test
   TERRAFORM_VERSION: 1.12.1
