@@ -1,18 +1,14 @@
 terraform {
+
   backend "remote" {
-    organization = "ShakilOPs"
+
+    organization = "ShakilOps"
 
     workspaces {
-      name = "CNC-awsEC2"
+      name = "CNC-awsECS"
     }
 
   }
-  # cloud {
-  #   organization = "ShakilOPs"
-  #   workspaces {
-  #     name = "codeNcoffee"
-  #   }
-  # }
 
   required_providers {
     aws = {

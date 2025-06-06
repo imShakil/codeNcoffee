@@ -6,7 +6,7 @@ resource "aws_lb" "cnc_alb" {
   subnets            = aws_subnet.cnc_vpc_public_subnets[*].id
 
   tags = {
-    Name = "cnc_alb"
+    Name = "cnc-alb"
   }
 }
 
