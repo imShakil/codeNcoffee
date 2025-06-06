@@ -1,6 +1,7 @@
 name: Docker Push in Elastic Container Registry
 
 on:
+    workflow_dispatch:
     push:
         branches:
             - main
@@ -37,5 +38,5 @@ jobs:
                 context: ./deploy-with-ecs/japp
                 push: true
                 tags: |
-                    ${{ steps.login-ecr.outputs.registry }}/imshakil/{{ env.APP_NAME }}:${{ env.VERSION }}
-                    $${{ steps.login-ecr.outputs.registry }}/imshakil/{{ env.APP_NAME }}:latest
+                   ${{ steps.login-ecr.outputs.registry }}/imshakil/${{ env.APP_NAME }}:${{ env.VERSION }}
+                   ${{ steps.login-ecr.outputs.registry }}/imshakil/${{ env.APP_NAME }}:latest
